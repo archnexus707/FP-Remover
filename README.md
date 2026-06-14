@@ -156,9 +156,13 @@ All installed automatically by `setup.sh`.
 
 ## 👤 Author
 
-**archnexus707** — privacy advocate, terminal toolsmith.
+**archnexus707** — Red team toolsmith, privacy advocate.
 
-> 💰 **Donations: archnexus707@gmail.com:** `archnexus707`
+> 💀 Donations: archnexus707@gmail.com
+
+<p align="center">
+  <img src="assets/anime_dance.gif" width="120" alt="Dance">
+</p>
 
 ---
 
