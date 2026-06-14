@@ -71,7 +71,7 @@ summary() {
     echo -e "    ${CYAN}sudo ./clearshadow.sh${R}             ${DIM}# Full anti-forensics sweep${R}"
     echo -e "    ${CYAN}sudo ./clearshadow.sh --passes 7${R}  ${DIM}# DoD-level wipe${R}"
     echo ""
-    echo -e "  ${DIM}Author : archnexus707  |  Donations welcome${R}"
+    echo -e "  ${DIM}Author : archnexus707  |  Donations: archnexus707@gmail.com${R}"
     echo ""
 }
 
