@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #==============================================================================
 #   CLEAR SHADOW — Advanced Stealth Build (APT-Grade Hardened)
-#   Author : archnexus_707
+#   Author : archnexus707
 #   
 #   Hardening layers:
 #     1. ldflags strip + symbol removal

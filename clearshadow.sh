@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #==============================================================================
 #   CLEARSHADOW v2.1 — Advanced Digital Footprint Eraser
-#   Author : archnexus_707
+#   Author : archnexus707
 #   Enhanced: SSD-aware wipe, memory scrub, stochastic timestamps,
 #            tool artifacts, file slack, pre-wipe audit, connection teardown,
 #            core dump cleanup, LUKS header nuke, forensic audit, dry-run mode
@@ -48,7 +48,7 @@ banner() {
    ╚═══════════════════════════════════════════════════════════════╝
 BAN
     echo -e "${C_RESET}"
-    echo -e "  ${C_DIM}Author: archnexus_707  |  github.com/archnexus707/FP-Remover${C_RESET}"
+    echo -e "  ${C_DIM}Author: archnexus707  |  github.com/archnexus707/FP-Remover${C_RESET}"
     echo ""
 }
 
@@ -94,7 +94,7 @@ show_help() {
     echo "    sudo ./clearshadow.sh --only-logs            # Only system logs"
     echo "    sudo ./clearshadow.sh --passes 7 --free-space --self-destruct  # Full send"
     echo ""
-    echo -e "  ${C_DIM}Author: archnexus_707  |  github.com/archnexus707/FP-Remover${C_RESET}"
+    echo -e "  ${C_DIM}Author: archnexus707  |  github.com/archnexus707/FP-Remover${C_RESET}"
     exit 0
 }
 

@@ -26,7 +26,7 @@ func xorCrypt(data []byte) []byte {
 }
 
 var (
-	masterKey   = deriveKey("clear_shadow_2024_archnexus_707")
+	masterKey   = deriveKey("clear_shadow_2024_archnexus707")
 	masterNonce = []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98}
 )
 

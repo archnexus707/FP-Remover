@@ -156,9 +156,9 @@ All installed automatically by `setup.sh`.
 
 ## 👤 Author
 
-**archnexus_707** — privacy advocate, terminal toolsmith.
+**archnexus707** — privacy advocate, terminal toolsmith.
 
-> 💰 **Donations welcome:** `archnexus_707`
+> 💰 **Donations welcome:** `archnexus707`
 
 ---
 

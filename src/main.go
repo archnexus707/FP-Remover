@@ -13,7 +13,7 @@ const banner = `
    ║     ░▒▓█  CLEAR SHADOW — RED TEAM FOOTPRINT ERASER  █▓▒░    ║
    ║          Cross-Platform | SSD-Aware | Anti-Forensics         ║
    ╚═══════════════════════════════════════════════════════════════╝
-                        archnexus_707`
+                        archnexus707`
 
 var (
 	dryRun       = flag.Bool("dry-run", false, "Preview only — no changes made")
@@ -31,7 +31,7 @@ func main() {
 
 	// Safe flags — no stealth delay, no operations
 	if *showVersion {
-		fmt.Println("clear_shadow v2.2 — archnexus_707")
+		fmt.Println("clear_shadow v2.2 — archnexus707")
 		return
 	}
 

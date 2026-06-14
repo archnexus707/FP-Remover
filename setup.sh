@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #==============================================================================
 #   FP-Remover — Setup & Dependency Installer
-#   Author : archnexus_707
+#   Author : archnexus707
 #   Tool   : clearshadow.sh — Advanced Digital Footprint Eraser
 #==============================================================================
 set -e
@@ -15,7 +15,7 @@ banner() {
     echo -e "${RED}   ║     ░▒▓█  FP-REMOVER — DIGITAL FOOTPRINT ERASER SETUP  █▓▒░  ║${R}"
     echo -e "${RED}   ╚═══════════════════════════════════════════════════════════════╝${R}"
     echo ""
-    echo -e "  ${DIM}Author: archnexus_707  |  github.com/archnexus707/FP-Remover${R}"
+    echo -e "  ${DIM}Author: archnexus707  |  github.com/archnexus707/FP-Remover${R}"
     echo ""
 }
 
@@ -71,7 +71,7 @@ summary() {
     echo -e "    ${CYAN}sudo ./clearshadow.sh${R}             ${DIM}# Full anti-forensics sweep${R}"
     echo -e "    ${CYAN}sudo ./clearshadow.sh --passes 7${R}  ${DIM}# DoD-level wipe${R}"
     echo ""
-    echo -e "  ${DIM}Author : archnexus_707  |  Donations welcome${R}"
+    echo -e "  ${DIM}Author : archnexus707  |  Donations welcome${R}"
     echo ""
 }
 
