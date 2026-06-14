@@ -19,6 +19,11 @@ AUDIT_LOG="/tmp/clearshadow_audit_$(date +%s).log"
 SHRED_HEADER=0
 WIPE_PASSES=3
 DRY_RUN=0
+SELF_DESTRUCT=0
+PARALLEL=1
+FREE_SPACE=0
+SKIP_MODULES=()
+ONLY_MODULES=()
 
 # ── Dependency check ─────────────────────────────────────────────
 check_deps() {
@@ -52,31 +57,44 @@ show_help() {
     echo ""
     echo "  Usage: ./clearshadow.sh [flags]"
     echo ""
-    echo "  ${C_BOLD}Flags:${C_RESET}"
+    echo "  ${C_BOLD}Core Flags:${C_RESET}"
     echo "    --dry-run         Preview what will be wiped (no changes made)"
-    echo "    --passes N        Number of shred passes (default: 3)"
+    echo "    --free-space      Also overwrite free disk space (prevents recovery)"
+    echo "    --self-destruct   Remove clearshadow.sh itself after execution"
+    echo "    --passes N        Number of shred passes (default: 3, DoD: 7)"
+    echo "    --no-parallel     Disable parallel shredding (slower but safer)"
     echo "    --shred-header    Also destroy LUKS encryption headers"
     echo "    --help            Show this help"
     echo ""
-    echo "  ${C_BOLD}Features:${C_RESET}"
-    echo "    Shell histories   bash, zsh, fish, mysql, psql, python, node"
-    echo "    System logs       auth, syslog, journald, audit, firewall"
-    echo "    Temp & caches     /tmp, /var/tmp, thumbnails, clipboard, trash"
-    echo "    Browser data      Firefox, Chromium, Brave, Edge"
-    echo "    SSH & network     known_hosts, DNS cache, ARP, Wi-Fi profiles"
-    echo "    App artifacts     vim, nano, git, docker, msf, burp, john, hashcat"
-    echo "    Process memory    ssh-agent, gpg-agent, gnome-keyring"
-    echo "    Memory & swap     page cache, dentries, inodes, swap rotation"
-    echo "    Core dumps        systemd coredump, /var/crash, apport"
-    echo "    Connections       Teardown interactive sockets"
-    echo "    Timestamps        Stochastic randomization"
-    echo "    SSD TRIM          fstrim on supported filesystems"
+    echo "  ${C_BOLD}Selective Sweep (skip modules):${C_RESET}"
+    echo "    --skip-logs       Skip system logs"
+    echo "    --skip-browsers   Skip browser data"
+    echo "    --skip-network    Skip SSH & network traces"
+    echo "    --skip-apps       Skip application artifacts"
+    echo "    --skip-memory     Skip memory, swap, process scrub"
+    echo "    --skip-timestamps Skip timestamp randomization"
+    echo "    --skip-shells     Skip shell histories"
+    echo "    --skip-hidden     Skip hidden history sweep"
+    echo ""
+    echo "  ${C_BOLD}Targeted Sweep (only run these):${C_RESET}"
+    echo "    --only-logs       Only wipe system logs"
+    echo "    --only-browsers   Only wipe browser data"
+    echo "    --only-network    Only wipe SSH & network traces"
+    echo "    --only-apps       Only wipe application artifacts"
+    echo "    --only-memory     Only scrub memory/swap/processes"
+    echo "    --only-timestamps Only randomize timestamps"
+    echo "    --only-shells     Only wipe shell histories"
+    echo "    --only-hidden     Only wipe hidden histories"
     echo ""
     echo "  ${C_BOLD}Examples:${C_RESET}"
-    echo "    sudo ./clearshadow.sh                 # Full wipe (asks confirmation)"
-    echo "    ./clearshadow.sh --dry-run            # Preview without wiping"
-    echo "    sudo ./clearshadow.sh --passes 7      # 7-pass DoD wipe"
-    echo "    sudo ./clearshadow.sh --shred-header  # Wipe + destroy LUKS headers"
+    echo "    sudo ./clearshadow.sh                       # Full sweep"
+    echo "    ./clearshadow.sh --dry-run                  # Safe preview"
+    echo "    sudo ./clearshadow.sh --free-space           # Wipe + free space"
+    echo "    sudo ./clearshadow.sh --skip-browsers        # Full except browsers"
+    echo "    sudo ./clearshadow.sh --only-logs            # Only system logs"
+    echo "    sudo ./clearshadow.sh --passes 7 --free-space --self-destruct  # Full send"
+    echo ""
+    echo -e "  ${C_DIM}Author: archnexus_707  |  github.com/archnexus707/FP-Remover${C_RESET}"
     exit 0
 }
 
@@ -112,6 +130,27 @@ warnout() { echo -e "  ${C_YELLOW}◇${C_RESET} ${C_DIM}$1${C_RESET}"; }
 audit() { echo "$(date '+%H:%M:%S') | $1" >> "$AUDIT_LOG"; }
 
 # ── Improved wipe: shred + fallocate hole punch for SSDs ────────
+# ── Parallel execution helper ────────────────────────────────────
+parallel_exec() {
+    local func="$1"; shift
+    local -a items=("$@")
+    if [ "$PARALLEL" -eq 0 ] || [ ${#items[@]} -le 2 ]; then
+        for item in "${items[@]}"; do "$func" "$item"; done
+    else
+        local max_jobs=$(nproc 2>/dev/null || echo 4)
+        local running=0
+        for item in "${items[@]}"; do
+            "$func" "$item" &
+            running=$((running + 1))
+            if [ "$running" -ge "$max_jobs" ]; then
+                wait -n 2>/dev/null || true
+                running=$((running - 1))
+            fi
+        done
+        wait 2>/dev/null || true
+    fi
+}
+
 wipe_file() {
     local f="$1"
     [ -f "$f" ] || return 0
@@ -216,7 +255,7 @@ sweep_shells() {
         ~/.lesshst ~/.wget-hsts ~/.local/share/fish/fish_history
         /root/.bash_history /root/.zsh_history /root/.sh_history
     )
-    for f in "${files[@]}"; do wipe_file "$f"; done
+    for f in "${files[@]}"; do wipe_file "$f" & done; wait 2>/dev/null || true
     history -c 2>/dev/null; unset HISTFILE 2>/dev/null
     export HISTFILE=/dev/null HISTSIZE=0 HISTFILESIZE=0
     typeout "Shell traces erased ($(echo ${#files[@]}) files processed)"
@@ -237,7 +276,7 @@ sweep_logs() {
         /var/log/apache2/access.log /var/log/apache2/error.log
         /var/log/nginx/access.log /var/log/nginx/error.log
     )
-    for f in "${logs[@]}"; do truncate_log "$f"; done
+    for f in "${logs[@]}"; do truncate_log "$f" & done; wait 2>/dev/null || true
     
     # Selective journal vacuum — vac yesterday's data, keep rotation looking normal
     journalctl --vacuum-time=1d 2>/dev/null || true
@@ -327,9 +366,13 @@ sweep_apps() {
         ~/.impacket ~/impacket*.py
         /tmp/nc.* /tmp/rev.* /tmp/.X11-unix/*
     )
+    local running=0; local max_jobs=$(nproc 2>/dev/null || echo 4)
     for artifact in "${tool_artifacts[@]}"; do
-        rm -rf "$artifact" 2>/dev/null || true
+        rm -rf "$artifact" 2>/dev/null &
+        running=$((running + 1))
+        if [ "$running" -ge "$max_jobs" ]; then wait -n 2>/dev/null || true; running=$((running - 1)); fi
     done
+    wait 2>/dev/null || true
     typeout "Application & tool artifacts wiped"
 }
 
@@ -469,7 +512,67 @@ sweep_luks_header() {
     done
 }
 
-# ── Post-wipe verification ──────────────────────────────────────
+# ── NEW: Free space wiping ──────────────────────────────────────
+sweep_free_space() {
+    section "FREE SPACE" "Overwriting unallocated disk blocks to prevent file recovery"
+    
+    local dirs_to_fill=()
+    [ -d /tmp ] && dirs_to_fill+=(/tmp)
+    [ -d /var/tmp ] && dirs_to_fill+=(/var/tmp)
+    [ -d "$HOME" ] && dirs_to_fill+=("$HOME")
+    
+    for target_dir in "${dirs_to_fill[@]}"; do
+        local avail=$(df --output=avail "$target_dir" 2>/dev/null | tail -1 | tr -d ' ')
+        if [ -z "$avail" ] || [ "$avail" -eq 0 ]; then continue; fi
+        
+        typeout "Filling free space in $target_dir ($((avail/1024))MB available)"
+        
+        if [ "$DRY_RUN" -eq 1 ]; then
+            audit "DRY-RUN: would fill free space in $target_dir ($((avail/1024))MB)"
+            continue
+        fi
+        
+        # Fill with random data, then sync and remove
+        local filler="$target_dir/.cs_free_fill_$$"
+        if command -v dd >/dev/null 2>&1; then
+            dd if=/dev/urandom of="$filler" bs=1M count=$((avail/1024 - 10)) 2>/dev/null || true
+            sync
+            shred -uzn 1 "$filler" 2>/dev/null || rm -f "$filler" 2>/dev/null || true
+        fi
+        typeout "Free space wiped in $target_dir"
+        audit "FREE-SPACE: $target_dir"
+    done
+    ssd_trim
+}
+
+# ── NEW: Self-destruct ──────────────────────────────────────────
+self_destruct() {
+    [ "$SELF_DESTRUCT" -eq 1 ] || return 0
+    section "SELF-DESTRUCT" "Removing clearshadow.sh from the system"
+    local self="$(readlink -f "$0")"
+    if [ -f "$self" ]; then
+        shred -uzn "$WIPE_PASSES" "$self" 2>/dev/null || rm -f "$self" 2>/dev/null || true
+        audit "SELF-DESTRUCT: $self"
+        typeout "clearshadow.sh has been removed"
+    fi
+}
+
+# ── Module gate: should we run this module? ─────────────────────
+should_run() {
+    local module="$1"
+    # If --only-* is set, only run matching modules
+    if [ ${#ONLY_MODULES[@]} -gt 0 ]; then
+        for m in "${ONLY_MODULES[@]}"; do
+            [ "$m" = "$module" ] && return 0
+        done
+        return 1
+    fi
+    # If --skip-* is set, skip matching modules
+    for m in "${SKIP_MODULES[@]}"; do
+        [ "$m" = "$module" ] && return 1
+    done
+    return 0
+}
 verify_wipe() {
     section "POST-WIPE VERIFICATION" "Checking for remaining artifacts"
     local remaining=0
@@ -505,7 +608,11 @@ run() {
         echo -e "  ${C_ORANGE}Running as user — partial wipe only${C_RESET}"
         echo -e "  ${C_ORANGE}  For full sweep:${C_RESET} ${C_PINK}sudo $0${C_RESET}\n"
         forensic_audit
-        sweep_shells; sweep_temp; sweep_browsers; sweep_apps; sweep_hidden
+        should_run "shells" && sweep_shells
+        sweep_temp
+        should_run "browsers" && sweep_browsers
+        should_run "apps" && sweep_apps
+        should_run "hidden" && sweep_hidden
         ssd_trim
         verify_wipe
         echo -e "\n  ${C_ORANGE}Audit log: ${AUDIT_LOG}${C_RESET}"
@@ -523,17 +630,23 @@ run() {
     echo ""; echo -e "  ${C_RED}${C_RESET} ${C_RED}STARTING FULL ANTI-FORENSICS SWEEP${C_RESET} ${C_RED}${C_RESET}\n"
 
     forensic_audit
-    sweep_shells
-    [ "$DRY_RUN" -ne 1 ] && { sweep_logs; sweep_process_memory; sweep_coredumps; sweep_connections; sweep_memory; }
+    should_run "shells" && sweep_shells
+    should_run "logs" && [ "$DRY_RUN" -ne 1 ] && sweep_logs
     sweep_temp
-    sweep_browsers
-    sweep_network
-    sweep_apps
-    sweep_hidden
-    [ "$DRY_RUN" -ne 1 ] && sweep_timestamps
+    should_run "browsers" && sweep_browsers
+    should_run "network" && sweep_network
+    should_run "apps" && sweep_apps
+    should_run "hidden" && sweep_hidden
+    should_run "process" && [ "$DRY_RUN" -ne 1 ] && sweep_process_memory
+    should_run "cores" && [ "$DRY_RUN" -ne 1 ] && sweep_coredumps
+    should_run "connections" && [ "$DRY_RUN" -ne 1 ] && sweep_connections
+    should_run "memory" && [ "$DRY_RUN" -ne 1 ] && sweep_memory
+    should_run "timestamps" && [ "$DRY_RUN" -ne 1 ] && sweep_timestamps
     sweep_luks_header
     ssd_trim
+    [ "$FREE_SPACE" -eq 1 ] && sweep_free_space
     verify_wipe
+    self_destruct
 
     echo ""
     echo -e "  ${C_GREEN}╔══════════════════════════════════╗${C_RESET}"
@@ -557,8 +670,27 @@ run() {
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run) DRY_RUN=1; shift ;;
+        --free-space) FREE_SPACE=1; shift ;;
+        --self-destruct) SELF_DESTRUCT=1; shift ;;
         --shred-header) SHRED_HEADER=1; shift ;;
         --passes) WIPE_PASSES="$2"; shift 2 ;;
+        --no-parallel) PARALLEL=0; shift ;;
+        --skip-logs) SKIP_MODULES+=("logs"); shift ;;
+        --skip-browsers) SKIP_MODULES+=("browsers"); shift ;;
+        --skip-network) SKIP_MODULES+=("network"); shift ;;
+        --skip-apps) SKIP_MODULES+=("apps"); shift ;;
+        --skip-memory) SKIP_MODULES+=("memory"); SKIP_MODULES+=("process"); SKIP_MODULES+=("cores"); SKIP_MODULES+=("connections"); shift ;;
+        --skip-timestamps) SKIP_MODULES+=("timestamps"); shift ;;
+        --skip-shells) SKIP_MODULES+=("shells"); shift ;;
+        --skip-hidden) SKIP_MODULES+=("hidden"); shift ;;
+        --only-logs) ONLY_MODULES+=("logs"); shift ;;
+        --only-browsers) ONLY_MODULES+=("browsers"); shift ;;
+        --only-network) ONLY_MODULES+=("network"); shift ;;
+        --only-apps) ONLY_MODULES+=("apps"); shift ;;
+        --only-memory) ONLY_MODULES+=("memory"); ONLY_MODULES+=("process"); ONLY_MODULES+=("cores"); ONLY_MODULES+=("connections"); shift ;;
+        --only-timestamps) ONLY_MODULES+=("timestamps"); shift ;;
+        --only-shells) ONLY_MODULES+=("shells"); shift ;;
+        --only-hidden) ONLY_MODULES+=("hidden"); shift ;;
         --help|-h) show_help ;;
         *) shift ;;
     esac
