@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 #==============================================================================
-#   CLEARSHADOW v2.1 — Advanced Digital Footprint Eraser
+#   CLEARSHADOW v2.2 — Advanced Digital Footprint Eraser
 #   Author : archnexus707
 #   Enhanced: SSD-aware wipe, memory scrub, stochastic timestamps,
 #            tool artifacts, file slack, pre-wipe audit, connection teardown,
-#            core dump cleanup, LUKS header nuke, forensic audit, dry-run mode
+#            core dump cleanup, LUKS header nuke, forensic audit, dry-run mode,
+#            Docker/Snap/Flatpak cleanup, stealth mode, self-destruct v2,
+#            Th3_M0th3r_O_W@r integration
 #==============================================================================
 set -e
 
@@ -557,6 +559,61 @@ self_destruct() {
     fi
 }
 
+# ── NEW v2.2: Docker cleanup ─────────────────────────────────────
+sweep_docker() {
+    section "DOCKER ARTIFACTS" "containers, volumes, images, build cache"
+    if command -v docker >/dev/null 2>&1; then
+        docker rm -f $(docker ps -aq) 2>/dev/null || true
+        docker volume prune -f 2>/dev/null || true
+        docker image prune -a -f 2>/dev/null || true
+        docker builder prune -a -f 2>/dev/null || true
+        docker system prune -a -f --volumes 2>/dev/null || true
+        typeout "Docker artifacts purged"
+    else
+        warnout "Docker not found — skipping"
+    fi
+    audit "Docker artifacts purged"
+}
+
+# ── NEW v2.2: Snap + Flatpak caches ──────────────────────────────
+sweep_snaps() {
+    section "SNAP & FLATPAK" "cache, temporary data"
+    if command -v snap >/dev/null 2>&1; then
+        rm -rf ~/snap/*/*/.cache 2>/dev/null || true
+        typeout "Snap caches purged"
+    fi
+    if command -v flatpak >/dev/null 2>&1; then
+        rm -rf ~/.var/app/*/cache 2>/dev/null || true
+        rm -rf ~/.local/share/flatpak/*/.cache 2>/dev/null || true
+        typeout "Flatpak caches purged"
+    fi
+    audit "Snap/Flatpak caches purged"
+}
+
+# ── NEW v2.2: systemd journal deeper clean ───────────────────────
+sweep_journal_deep() {
+    section "SYSTEMD JOURNAL" "deep vacuum + rotate"
+    if command -v journalctl >/dev/null 2>&1; then
+        journalctl --vacuum-size=1M 2>/dev/null || true
+        journalctl --rotate 2>/dev/null || true
+        journalctl --vacuum-time=1s 2>/dev/null || true
+        rm -rf /var/log/journal/* 2>/dev/null || true
+        typeout "Journal deeply purged"
+    fi
+    audit "Journal deep purge"
+}
+
+# ── NEW v2.2: Th3_M0th3r_O_W@r cleanup ───────────────────────────
+sweep_mother_war() {
+    section "C2 FRAMEWORK" "Th3_M0th3r_O_W@r operational artifacts"
+    rm -rf /tmp/clearshadow_audit_*.log 2>/dev/null || true
+    rm -rf /tmp/svchost* /tmp/svcs* /tmp/cs_* /tmp/scr_* /tmp/lsass_* /tmp/sam_* /tmp/exfil_* 2>/dev/null || true
+    rm -rf /tmp/.cs_* /tmp/ccache* /tmp/krb5cc* /tmp/nc.* /tmp/rev.* 2>/dev/null || true
+    rm -rf ~/.msf4/logs/* ~/.msf4/loot/* 2>/dev/null || true
+    typeout "Operational artifacts purged"
+    audit "C2 framework artifacts purged"
+}
+
 # ── Module gate: should we run this module? ─────────────────────
 should_run() {
     local module="$1"
@@ -645,6 +702,11 @@ run() {
     sweep_luks_header
     ssd_trim
     [ "$FREE_SPACE" -eq 1 ] && sweep_free_space
+    # v2.2 new modules
+    should_run "docker" && sweep_docker
+    should_run "snaps" && sweep_snaps
+    should_run "journal" && [ "$DRY_RUN" -ne 1 ] && sweep_journal_deep
+    should_run "motherwar" && sweep_mother_war
     verify_wipe
     self_destruct
 

@@ -1,15 +1,17 @@
 #!/usr/bin/env bash
 #==============================================================================
-#   CLEAR SHADOW — Advanced Stealth Build (APT-Grade Hardened)
+#   CLEAR SHADOW v2.2 — Advanced Stealth Build (APT-Grade Hardened)
 #   Author : archnexus707
 #   
 #   Hardening layers:
-#     1. ldflags strip + symbol removal
-#     2. UPX packing (LZMA max compression)
-#     3. String obfuscation (XOR + AES-256-GCM in source)
-#     4. Anti-sandbox / anti-debug (in source)
-#     5. Binary scrambling (random section reorder)
-#     6. Timestamp forging
+#     1. ldflags strip + symbol removal + build ID removal
+#     2. Disable inlining (-gcflags=-l) for smaller binary
+#     3. UPX packing (LZMA max compression, internal use)
+#     4. gzip + C stub packer (custom, no UPX signature)
+#     5. String obfuscation (XOR + AES-256-GCM in source)
+#     6. Anti-sandbox / anti-debug (in source)
+#     7. Timestamp forging (2024-01-01)
+#     8. -trimpath (no build paths in binary)
 #==============================================================================
 set -e
 
@@ -29,7 +31,7 @@ echo -e "${R}"
 
 # ── Build flags for maximum stealth ──────────────────────────────
 LDFLAGS="-s -w -buildid= -X main.buildTime=$(date +%s)"
-GCFLAGS="all=-trimpath=$PWD"
+GCFLAGS="all=-l -trimpath=$PWD"
 
 # ── Function: build + pack target ────────────────────────────────
 build_target() {
