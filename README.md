@@ -158,7 +158,11 @@ All installed automatically by `setup.sh`.
 
 **archnexus707** — Red team toolsmith, privacy advocate.
 
-> 💀 Donations: archnexus707@gmail.com
+## ☕ Support
+
+If FP-Remover helps you stay invisible, consider buying me a coffee:
+
+[![](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-archnexus707@gmail.com-yellow?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](mailto:archnexus707@gmail.com)
 
 <p align="center">
   <sub>╔══════════════════════════════════╗</sub><br>
