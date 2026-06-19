@@ -1,43 +1,50 @@
 #!/usr/bin/env bash
-#==============================================================================
-#   CLEAR SHADOW v2.2 — Advanced Stealth Build (APT-Grade Hardened)
-#   Author : archnexus707
-#   
-#   Hardening layers:
-#     1. ldflags strip + symbol removal + build ID removal
-#     2. Disable inlining (-gcflags=-l) for smaller binary
-#     3. UPX packing (LZMA max compression, internal use)
-#     4. gzip + C stub packer (custom, no UPX signature)
-#     5. String obfuscation (XOR + AES-256-GCM in source)
-#     6. Anti-sandbox / anti-debug (in source)
-#     7. Timestamp forging (2024-01-01)
-#     8. -trimpath (no build paths in binary)
-#==============================================================================
 set -e
 
 RED='\033[38;5;196m'; GREEN='\033[38;5;46m'; CYAN='\033[38;5;51m'
-PURPLE='\033[38;5;129m'; YELLOW='\033[38;5;226m'; DIM='\033[2m'; R='\033[0m'
+PURPLE='\033[38;5;129m'; YELLOW='\033[38;5;226m'; PINK='\033[38;5;213m'
+WHITE='\033[1;37m'; DIM='\033[2m'; BOLD='\033[1m'; R='\033[0m'
 
 cd "$(dirname "$0")/src"
 RELEASE_DIR="../release"
 mkdir -p "$RELEASE_DIR"
 
-echo -e "${RED}"
-echo "   ╔═══════════════════════════════════════════════════════════════╗"
-echo "   ║   ░▒▓█  CLEAR SHADOW — APT STEALTH BUILD  █▓▒░             ║"
-echo "   ║      Multi-Layer Obfuscation | UPX | XOR | AES | AV Evasion ║"
-echo "   ╚═══════════════════════════════════════════════════════════════╝"
+echo ""
+echo -e "${RED}${BOLD}"
+cat << 'EOF'
+    ██████╗██╗     ███████╗ █████╗ ██████╗ 
+   ██╔════╝██║     ██╔════╝██╔══██╗██╔══██╗
+   ██║     ██║     █████╗  ███████║██████╔╝
+   ██║     ██║     ██╔══╝  ██╔══██║██╔══██╗
+   ╚██████╗███████╗███████╗██║  ██║██║  ██║
+    ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
+EOF
+echo -e "${PURPLE}${BOLD}"
+cat << 'EOF'
+   ███████╗██╗  ██╗ █████╗ ██████╗  ██████╗ ██╗    ██╗
+   ██╔════╝██║  ██║██╔══██╗██╔══██╗██╔═══██╗██║    ██║
+   ███████╗███████║███████║██║  ██║██║   ██║██║ █╗ ██║
+   ╚════██║██╔══██║██╔══██║██║  ██║██║   ██║██║███╗██║
+   ███████║██║  ██║██║  ██║██████╔╝╚██████╔╝╚███╔███╔╝
+   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚══╝╚══╝ 
+EOF
 echo -e "${R}"
+echo -e "  ${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
+echo -e "  ${PINK}🔥${R} ${WHITE}${BOLD}APT-GRADE STEALTH BUILD${R} ${DIM}// archnexus707${R}  ${PINK}🔥${R}"
+echo -e "  ${DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}"
+echo ""
+echo -e "  ${DIM}Hardening: strip + no-buildid + UPX + XOR+AES + anti-sandbox${R}"
+echo ""
 
-# ── Build flags for maximum stealth ──────────────────────────────
 LDFLAGS="-s -w -buildid= -X main.buildTime=$(date +%s)"
-GCFLAGS="all=-l -trimpath=$PWD"
+GCFLAGS="all=-l"
 
 # ── Function: build + pack target ────────────────────────────────
 build_target() {
     local name="$1" goos="$2" goarch="$3" exe="$4"
     echo -e "${CYAN}[*] Compiling ${name}...${R}"
 
+    echo -e "  ${DIM}[$(date +%H:%M:%S)]${R} ${CYAN}⏳${R} Compiling..."
     CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" \
         go build -trimpath \
         -ldflags="${LDFLAGS}" \

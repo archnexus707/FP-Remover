@@ -42,20 +42,35 @@ check_deps() {
 
 banner() {
     clear 2>/dev/null || true
-    echo -e "${C_RED}"
+    echo ""
+    echo -e "${C_RED}${C_BOLD}"
     cat << 'BAN'
-   ╔═══════════════════════════════════════════════════════════════╗
-   ║     ░▒▓█  CLEARSHADOW v2.1 — DIGITAL FOOTPRINT ERASER  █▓▒░  ║
-   ║        SSD-aware | Memory scrub | Slack wipe | Audit          ║
-   ╚═══════════════════════════════════════════════════════════════╝
+    ██████╗██╗     ███████╗ █████╗ ██████╗ 
+   ██╔════╝██║     ██╔════╝██╔══██╗██╔══██╗
+   ██║     ██║     █████╗  ███████║██████╔╝
+   ██║     ██║     ██╔══╝  ██╔══██║██╔══██╗
+   ╚██████╗███████╗███████╗██║  ██║██║  ██║
+    ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
+BAN
+    echo -e "${C_PURPLE}${C_BOLD}"
+    cat << 'BAN'
+   ███████╗██╗  ██╗ █████╗ ██████╗  ██████╗ ██╗    ██╗
+   ██╔════╝██║  ██║██╔══██╗██╔══██╗██╔═══██╗██║    ██║
+   ███████╗███████║███████║██║  ██║██║   ██║██║ █╗ ██║
+   ╚════██║██╔══██║██╔══██║██║  ██║██║   ██║██║███╗██║
+   ███████║██║  ██║██║  ██║██████╔╝╚██████╔╝╚███╔███╔╝
+   ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═════╝  ╚═════╝  ╚══╝╚══╝ 
 BAN
     echo -e "${C_RESET}"
-    echo -e "  ${C_DIM}Author: archnexus707  |  github.com/archnexus707/FP-Remover${C_RESET}"
+    echo -e "  ${C_DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+    echo -e "  ${C_PINK}🧹${C_RESET} ${C_WHITE}${C_BOLD}DIGITAL FOOTPRINT ERASER v2.2${C_RESET}  ${C_DIM}// archnexus707${C_RESET}  ${C_PINK}💀${C_RESET}"
+    echo -e "  ${C_DIM}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${C_RESET}"
+    echo -e "  ${C_DIM}SSD-aware | Memory scrub | Slack wipe | Anti-forensics audit${C_RESET}"
     echo ""
 }
 
 show_help() {
-    echo -e "${C_PURPLE}CLEARSHADOW v2.1 — Digital Footprint Eraser${C_RESET}"
+    echo -e "${C_PURPLE}CLEARSHADOW v2.2 — Digital Footprint Eraser${C_RESET}"
     echo ""
     echo "  Usage: ./clearshadow.sh [flags]"
     echo ""

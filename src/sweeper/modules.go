@@ -221,14 +221,26 @@ func (s *Sweeper) sweepTemp() {
 		}
 	}
 
+	systemDirs := map[string]bool{"/tmp": true, "/var/tmp": true, "/dev/shm": true}
 	for _, d := range dirs {
 		d = expand(d)
 		if s.cfg.DryRun {
 			fmt.Printf("  [DRY] Would purge: %s\n", d)
 			continue
 		}
-		os.RemoveAll(d)
-		os.MkdirAll(d, 0755) // Recreate so apps don't break
+		if systemDirs[d] {
+			filepath.Walk(d, func(path string, info os.FileInfo, err error) error {
+				if err != nil || path == d {
+					return nil
+				}
+				if !info.IsDir() {
+					os.Remove(path)
+				}
+				return nil
+			})
+		} else {
+			os.RemoveAll(d)
+		}
 		s.audit.Log("TEMP: %s", d)
 	}
 	okMsg("Temp & caches purged")
@@ -411,6 +423,7 @@ func (s *Sweeper) sweepTimestamps() {
 		}
 	}
 
+	seed := time.Now().UnixNano()
 	for _, dir := range dirs {
 		if !exists(dir) {
 			continue
@@ -419,10 +432,15 @@ func (s *Sweeper) sweepTimestamps() {
 			if err != nil || info.IsDir() {
 				return nil
 			}
-			// Random time in last 6 months
-			days := time.Duration(180-time.Now().UnixNano()%180) * 24 * time.Hour
-			hours := time.Duration(time.Now().UnixNano()%24) * time.Hour
-			mins := time.Duration(time.Now().UnixNano()%60) * time.Minute
+			seed ^= seed << 13
+			seed ^= seed >> 7
+			seed ^= seed << 17
+			days := time.Duration(int(seed%180)+1) * 24 * time.Hour
+			seed ^= seed << 13
+			seed ^= seed >> 7
+			seed ^= seed << 17
+			hours := time.Duration(int(seed%24)) * time.Hour
+			mins := time.Duration(int(seed%60)) * time.Minute
 			newTime := time.Now().Add(-days - hours - mins)
 			os.Chtimes(path, newTime, newTime)
 			return nil

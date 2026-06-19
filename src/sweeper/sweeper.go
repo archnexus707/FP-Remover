@@ -2,7 +2,7 @@ package sweeper
 
 import (
 	"fmt"
-	"os"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -38,7 +38,7 @@ func New(cfg Config) *Sweeper {
 }
 
 func detectOS() string {
-	if _, err := os.Stat("C:\\Windows"); err == nil {
+	if runtime.GOOS == "windows" {
 		return "windows"
 	}
 	return "linux"

